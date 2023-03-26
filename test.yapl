@@ -1,0 +1,28 @@
+==12345 4567673 54
+func
+2534657457 var /*
+ * This is a multi line comment
+ * test test 123 test test
+ */     and && ->
+0 null
+0x123456789abcdef ^^ 0b0101010101
+01234567 + 123456789
+0b1 << 5
+func_65645624
+// This is a single line comment
+
+= != += ? !
+/* This is also a multi line comment
+test test 123 test test
+ */
+func/*/9876
+&=123 %5 ->
+var // This is a single line comment
+1234 true
+false
+
+bar==!foo // This is same as bar == !foo
+foo<- bar // This is same as foo < -bar
+・
+,
+"\e[31mmy_str\e[0m\ti\t\e[31mng\e[0m"・
