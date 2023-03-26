@@ -1,0 +1,31 @@
+fun diff(i64: a, i64: b) -> usize
+{
+    i64: ret = 0;
+    if (a > b) {
+        ret = a - b;
+    }
+    else {
+        ret = b - a;
+    }
+    return ret.as<usize>();
+}
+
+fun main(isize: argc, char[][]: argv) -> int(0) // default return 0
+{
+    usize[2]: arr = { diff(15, 3), diff(1, 15) };
+
+    var: tup = arr.as<(usize, usize)>;
+    (usize, usize): tup1 = tup;
+
+    tup1[1]++;
+
+    u64: first = arr[0].as<u64>();
+    usize: second = tup1[1];
+
+    (usize[2], (usize, usize)): tuptup = { arr, tup1 }
+
+    println("{} {}", first, second); // -> "12 14"
+    println("{}", arr); // -> "[12, 14]"
+    println("{}", tup1); // -> "(12, 14)"
+    println("{}", tuptup); // -> "([12, 14], (12, 14))"
+}
