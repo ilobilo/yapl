@@ -10,8 +10,12 @@
 
 namespace yapl::lexer
 {
-    enum class tokens
+    enum class token_type
     {
+        eof, // space,
+
+        operators_start,
+
         inc,
         dec,
 
@@ -74,23 +78,23 @@ namespace yapl::lexer
         larrow,
         rarrow,
 
+        operators_end,
+
         func,
         ret,
 
         ttrue,
         tfalse,
-        null
-    };
-
-    enum class token_type
-    {
-        eof, // space,
+        null,
 
         number,
         string,
-        toperator,
         identifier
     };
+    constexpr inline bool is_operator(token_type type)
+    {
+        return type > token_type::operators_start && type < token_type::operators_end;
+    }
 
     enum class digit_type
     {
@@ -112,7 +116,6 @@ namespace yapl::lexer
     {
         std::string name;
         token_type type;
-        std::optional<tokens> tok;
 
         size_t line;
         size_t column;
@@ -136,6 +139,7 @@ namespace yapl::lexer
 
         public:
         tokeniser(std::string_view file, Stream &stream) : _stream(std::move(stream)), _line(0), _column(0), _file(file), peek_queue() { }
+        tokeniser(Stream &stream) : _stream(std::move(stream)), _line(0), _column(0), _file("in_memory"), peek_queue() { }
 
         tokeniser(const tokeniser &) = delete;
         void operator=(const tokeniser &) = delete;

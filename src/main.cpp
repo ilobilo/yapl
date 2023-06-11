@@ -34,7 +34,7 @@ uint64_t flags = 0;
 const auto parser = conflict::parser
 {
     conflict::option { { 'h', "help", "Show help" }, flags, (1 << 0) },
-	conflict::option { { 'v', "version", "Show version" }, flags, (1 << 1) },
+    conflict::option { { 'v', "version", "Show version" }, flags, (1 << 1) },
     conflict::string_option { { 't', "target", "Target triple: <arch><sub>-<vendor>-<sys>-<abi>" }, "triple", target_v }
 };
 
@@ -67,7 +67,7 @@ auto main(int argc, char **argv) -> int
     context.setOpaquePointers(true);
 
     llvm::IRBuilder builder(context);
-    auto module = std::make_unique<llvm::Module>("Module", context);
+    auto module = std::make_shared<llvm::Module>("Module", context);
 
     std::string target;
     if (target_v.empty())
@@ -136,6 +136,16 @@ auto main(int argc, char **argv) -> int
     // builder.CreateRet(builder.getInt32(0));
     // module->print(llvm::outs(), nullptr);
 
+    auto expr = "(5 + (2 - 1) * 2 - 1) / 2";
+    std::stringstream str(expr);
+    yapl::lexer::tokeniser tokeniser("test.cpp", str);
+    yapl::parser::pratt pratt(tokeniser);
+
+    std::string sout;
+    llvm::raw_string_ostream lstream(sout);
+    pratt.parse()->codegen(builder, module)->print(lstream);
+    fmt::print("{} = {}\n", expr, sout);
+
     bool first = true;
     for (const auto &filename : files)
     {
@@ -159,14 +169,11 @@ auto main(int argc, char **argv) -> int
         {
             try
             {
-                auto [str, type, tok, line, column] = tokeniser();
+                auto [str, type, line, column] = tokeniser();
                 if (type == yapl::lexer::token_type::eof)
                     break;
 
-                if (tok.has_value())
-                    fmt::print(" - {:02}:{:02}: {}: {}: {} \n", line, column, str, magic_enum::enum_name(type), magic_enum::enum_name(tok.value()));
-                else
-                    fmt::print(" - {:02}:{:02}: {}: {} \n", line, column, str, magic_enum::enum_name(type));
+                fmt::print(" - {:02}:{:02}: {}: {} \n", line, column, str, magic_enum::enum_name(type));
             }
             catch (const std::exception &e)
             {

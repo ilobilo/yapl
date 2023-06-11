@@ -11,95 +11,95 @@
 
 namespace yapl::lexer
 {
-    constexpr auto lookup = frozen::make_unordered_map<frozen::string, std::pair<token_type, tokens>>
+    constexpr auto lookup = frozen::make_unordered_map<frozen::string, token_type>
     ({
-        { "++", { token_type::toperator, tokens::inc } },
-        { "--", { token_type::toperator, tokens::dec } },
+        { "++", token_type::inc },
+        { "--", token_type::dec },
 
-        { "+", { token_type::toperator, tokens::add } },
-        { "-", { token_type::toperator, tokens::sub } },
-        { "*", { token_type::toperator, tokens::mul } },
-        { "/", { token_type::toperator, tokens::div } },
-        { "%", { token_type::toperator, tokens::mod } },
+        { "+", token_type::add },
+        { "-", token_type::sub },
+        { "*", token_type::mul },
+        { "/", token_type::div },
+        { "%", token_type::mod },
 
-        { "~", { token_type::toperator, tokens::bw_not } },
-        { "bitnot", { token_type::toperator, tokens::bw_not } },
+        { "~", token_type::bw_not },
+        { "bitnot", token_type::bw_not },
 
-        { "&", { token_type::toperator, tokens::bw_and } },
-        { "bitand", { token_type::toperator, tokens::bw_and } },
+        { "&", token_type::bw_and },
+        { "bitand", token_type::bw_and },
 
-        { "|", { token_type::toperator, tokens::bw_or } },
-        { "bitor", { token_type::toperator, tokens::bw_or } },
+        { "|", token_type::bw_or },
+        { "bitor", token_type::bw_or },
 
-        { "^", { token_type::toperator, tokens::bw_xor } },
-        { "bitxor", { token_type::toperator, tokens::bw_xor } },
+        { "^", token_type::bw_xor },
+        { "bitxor", token_type::bw_xor },
 
-        { "<<", { token_type::toperator, tokens::shiftl } },
-        { ">>", { token_type::toperator, tokens::shiftr } },
+        { "<<", token_type::shiftl },
+        { ">>", token_type::shiftr },
 
-        { "=", { token_type::toperator, tokens::assign } },
+        { "=", token_type::assign },
 
-        { "+=", { token_type::toperator, tokens::add_assign } },
-        { "-=", { token_type::toperator, tokens::sub_assign } },
-        { "*=", { token_type::toperator, tokens::mul_assign } },
-        { "/=", { token_type::toperator, tokens::div_assign } },
-        { "%=", { token_type::toperator, tokens::mod_assign } },
+        { "+=", token_type::add_assign },
+        { "-=", token_type::sub_assign },
+        { "*=", token_type::mul_assign },
+        { "/=", token_type::div_assign },
+        { "%=", token_type::mod_assign },
 
-        { "&=", { token_type::toperator, tokens::and_assign } },
-        { "and_eq", { token_type::toperator, tokens::and_assign } },
+        { "&=", token_type::and_assign },
+        { "and_eq", token_type::and_assign },
 
-        { "|=", { token_type::toperator, tokens::or_assign } },
-        { "or_eq", { token_type::toperator, tokens::or_assign } },
+        { "|=", token_type::or_assign },
+        { "or_eq", token_type::or_assign },
 
-        { "^=", { token_type::toperator, tokens::xor_assign } },
-        { "xor_eq", { token_type::toperator, tokens::xor_assign } },
+        { "^=", token_type::xor_assign },
+        { "xor_eq", token_type::xor_assign },
 
-        { "<<=", { token_type::toperator, tokens::shiftl_assign } },
-        { ">>=", { token_type::toperator, tokens::shiftr_assign } },
+        { "<<=", token_type::shiftl_assign },
+        { ">>=", token_type::shiftr_assign },
 
-        { "!", { token_type::toperator, tokens::log_not } },
-        { "not", { token_type::toperator, tokens::log_not } },
+        { "!", token_type::log_not },
+        { "not", token_type::log_not },
 
-        { "&&", { token_type::toperator, tokens::log_and } },
-        { "and", { token_type::toperator, tokens::log_and } },
+        { "&&", token_type::log_and },
+        { "and", token_type::log_and },
 
-        { "||", { token_type::toperator, tokens::log_or } },
-        { "or", { token_type::toperator, tokens::log_or } },
+        { "||", token_type::log_or },
+        { "or", token_type::log_or },
 
-        { "^^", { token_type::toperator, tokens::log_xor } },
-        { "xor", { token_type::toperator, tokens::log_xor } },
+        { "^^", token_type::log_xor },
+        { "xor", token_type::log_xor },
 
-        { "==", { token_type::toperator, tokens::eq } },
-        { "!=", { token_type::toperator, tokens::ne } },
-        { "<", { token_type::toperator, tokens::lt } },
-        { ">", { token_type::toperator, tokens::gt } },
-        { "<=", { token_type::toperator, tokens::le } },
-        { ">= ", { token_type::toperator, tokens::ge } },
+        { "==", token_type::eq },
+        { "!=", token_type::ne },
+        { "<", token_type::lt },
+        { ">", token_type::gt },
+        { "<=", token_type::le },
+        { ">= ", token_type::ge },
 
-        { "?", { token_type::toperator, tokens::question } },
-        { ":", { token_type::toperator, tokens::colon } },
-        { ";", { token_type::toperator, tokens::semicolon } },
+        { "?", token_type::question },
+        { ":", token_type::colon },
+        { ";", token_type::semicolon },
 
-        { ",", { token_type::toperator, tokens::comma } },
-        { ".", { token_type::toperator, tokens::dot } },
+        { ",", token_type::comma },
+        { ".", token_type::dot },
 
-        { "(", { token_type::toperator, tokens::open_round } },
-        { ")", { token_type::toperator, tokens::close_round } },
+        { "(", token_type::open_round },
+        { ")", token_type::close_round },
 
-        { "{", { token_type::toperator, tokens::open_curly } },
-        { "}", { token_type::toperator, tokens::close_curly } },
+        { "{", token_type::open_curly },
+        { "}", token_type::close_curly },
 
-        { "[", { token_type::toperator, tokens::open_square } },
-        { "]", { token_type::toperator, tokens::close_square } },
+        { "[", token_type::open_square },
+        { "]", token_type::close_square },
 
-        { "<-", { token_type::toperator, tokens::larrow } },
-        { "->", { token_type::toperator, tokens::rarrow } },
+        { "<-", token_type::larrow },
+        { "->", token_type::rarrow },
 
-        { "fun", { token_type::identifier, tokens::func } },
-        { "return", { token_type::identifier, tokens::ret } },
-        { "true", { token_type::identifier, tokens::ttrue } },
-        { "false", { token_type::identifier, tokens::tfalse } },
-        { "null", { token_type::identifier, tokens::null } }
+        { "fun", token_type::func },
+        { "return", token_type::ret },
+        { "true", token_type::ttrue },
+        { "false", token_type::tfalse },
+        { "null", token_type::null }
     });
 
     constexpr auto escapes = frozen::make_map<char, char>
@@ -171,7 +171,7 @@ namespace yapl::lexer
             switch (auto c = this->getc(); get_char_type(c))
             {
                 case char_type::eof:
-                    return { "", token_type::eof, std::nullopt, this->line(), this->column() };
+                    return { "", token_type::eof, this->line(), this->column() };
                 case char_type::space:
                     // return { " ", token_type::space, std::nullopt, this->line(), this->column() };
                     break;
@@ -204,7 +204,7 @@ namespace yapl::lexer
                                     else
                                     {
                                         if (c == '"')
-                                            return { str, token_type::string, std::nullopt, sline, scolumn };
+                                            return { str, token_type::string, sline, scolumn };
                                         else
                                             str += c;
 
@@ -256,8 +256,7 @@ namespace yapl::lexer
                             if (it == lookup.end())
                                 throw log::error(this->file(), sline, scolumn, "Unknown operator '{}'", name);
 
-                            auto [type, tok] = it->second;
-                            return { name, type, tok, sline, scolumn };
+                            return { name, it->second, sline, scolumn };
                         }
                     }
                     break;
@@ -277,7 +276,7 @@ namespace yapl::lexer
                         c = this->peekc();
 
                         if (get_char_type(c) != char_type::other)
-                            return { str, token_type::number, std::nullopt, sline, scolumn };
+                            return { str, token_type::number, sline, scolumn };
 
                         bool invalid_number = false;
 
@@ -322,12 +321,11 @@ namespace yapl::lexer
 
                         if (auto it = lookup.find(frozen::string(str)); it != lookup.end())
                         {
-                            auto [type, tok] = it->second;
-                            return { str, type, tok, sline, scolumn };
+                            return { str, it->second, sline, scolumn };
                         }
                     }
 
-                    return { str, digit ? token_type::number : token_type::identifier, std::nullopt, sline, scolumn };
+                    return { str, digit ? token_type::number : token_type::identifier, sline, scolumn };
                 }
             }
         }
