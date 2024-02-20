@@ -6,7 +6,7 @@
 #include <llvm/Target/TargetOptions.h>
 
 #include <llvm/Support/TargetSelect.h>
-#include <llvm/Support/Host.h>
+#include <llvm/TargetParser/Host.h>
 
 #include <llvm/MC/TargetRegistry.h>
 
@@ -32,28 +32,37 @@ namespace yapl::parser
         virtual llvm::Value *codegen(llvm::IRBuilder<> &builder, std::shared_ptr<llvm::Module> module) = 0;
     };
 
+    struct variable : node
+    {
+        private:
+        std::string name;
+
+        public:
+        variable(std::string name) : name(name) { }
+    };
+
     struct number_node : node
     {
+        private:
+        ssize_t value;
+
         number_node(ssize_t value) : value(value) { }
 
         llvm::Value *codegen(llvm::IRBuilder<> &builder, std::shared_ptr<llvm::Module> module) override
         {
             return llvm::ConstantInt::get(llvm::Type::getInt64Ty(module->getContext()), value);
         }
-
-        private:
-        ssize_t value;
     };
 
     struct binaryop_node : node
     {
         private:
-        char op;
+        lexer::token_type op;
         std::shared_ptr<node> left;
         std::shared_ptr<node> right;
 
         public:
-        binaryop_node(char op, std::shared_ptr<node> left, std::shared_ptr<node> right) : op(op), left(left), right(right) { }
+        binaryop_node(lexer::token_type op, std::shared_ptr<node> left, std::shared_ptr<node> right) : op(op), left(left), right(right) { }
 
         llvm::Value *codegen(llvm::IRBuilder<> &builder, std::shared_ptr<llvm::Module> module) override
         {
@@ -65,80 +74,74 @@ namespace yapl::parser
 
             switch (op)
             {
-                case '+':
-                    return builder.CreateAdd(leftValue, rightValue, "addtmp");
-                case '-':
-                    return builder.CreateSub(leftValue, rightValue, "subtmp");
-                case '*':
-                    return builder.CreateMul(leftValue, rightValue, "multmp");
-                case '/':
-                    return builder.CreateSDiv(leftValue, rightValue, "divtmp");
+                case lexer::token_type::add:
+                    return builder.CreateAdd(leftValue, rightValue);
+                case lexer::token_type::add_assign:
+                    return builder.CreateStore(builder.CreateAdd(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::sub:
+                    return builder.CreateSub(leftValue, rightValue);
+                case lexer::token_type::sub_assign:
+                    return builder.CreateStore(builder.CreateSub(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::mul:
+                    return builder.CreateMul(leftValue, rightValue);
+                case lexer::token_type::mul_assign:
+                    return builder.CreateStore(builder.CreateMul(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::div:
+                    return builder.CreateSDiv(leftValue, rightValue);
+                case lexer::token_type::div_assign:
+                    return builder.CreateStore(builder.CreateSDiv(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::mod:
+                    return builder.CreateSRem(leftValue, rightValue);
+                case lexer::token_type::mod_assign:
+                    return builder.CreateStore(builder.CreateSRem(leftValue, rightValue), leftValue);
+
+
+                case lexer::token_type::bw_and:
+                    return builder.CreateAnd(leftValue, rightValue);
+                case lexer::token_type::bw_and_assign:
+                    return builder.CreateStore(builder.CreateAnd(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::bw_or:
+                    return builder.CreateOr(leftValue, rightValue);
+                case lexer::token_type::bw_or_assign:
+                    return builder.CreateStore(builder.CreateOr(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::bw_xor:
+                    return builder.CreateXor(leftValue, rightValue);
+                case lexer::token_type::bw_xor_assign:
+                    return builder.CreateStore(builder.CreateXor(leftValue, rightValue), leftValue);
+
+
+                case lexer::token_type::shiftl:
+                    return builder.CreateShl(leftValue, rightValue);
+                case lexer::token_type::shiftl_assign:
+                    return builder.CreateStore(builder.CreateShl(leftValue, rightValue), leftValue);
+
+                case lexer::token_type::shiftr:
+                    return builder.CreateAShr(leftValue, rightValue);
+                case lexer::token_type::shiftr_assign:
+                    return builder.CreateStore(builder.CreateAShr(leftValue, rightValue), leftValue);
+
+
+                case lexer::token_type::eq:
+                    return builder.CreateICmpEQ(leftValue, rightValue);
+                case lexer::token_type::ne:
+                    return builder.CreateICmpNE(leftValue, rightValue);
+                case lexer::token_type::lt:
+                    return builder.CreateICmpSLT(leftValue, rightValue);
+                case lexer::token_type::gt:
+                    return builder.CreateICmpSGT(leftValue, rightValue);
+                case lexer::token_type::le:
+                    return builder.CreateICmpSLE(leftValue, rightValue);
+                case lexer::token_type::ge:
+                    return builder.CreateICmpSGE(leftValue, rightValue);
                 default:
                     return nullptr;
             }
         }
     };
-
-    template<typename Stream>
-    struct pratt
-    {
-        pratt(lexer::tokeniser<Stream> &tokeniser) : tokeniser(tokeniser), currentToken() { }
-        std::shared_ptr<node> parse()
-        {
-            currentToken = tokeniser();
-            return expr();
-        }
-
-        private:
-        lexer::tokeniser<Stream> &tokeniser;
-        lexer::token currentToken;
-
-        std::shared_ptr<node> factor()
-        {
-            lexer::token token = currentToken;
-            if (token.type == lexer::token_type::number)
-            {
-                currentToken = tokeniser();
-                return std::make_shared<number_node>(std::stoi(token.name));
-            }
-            else if (token.type == lexer::token_type::open_round)
-            {
-                currentToken = tokeniser();
-                std::shared_ptr<node> node = expr();
-                if (currentToken.type != lexer::token_type::close_round)
-                    throw std::runtime_error("Expected )");
-
-                currentToken = tokeniser();
-                return node;
-            }
-            else throw log::error(tokeniser.file(), token.line, token.column, "Expected integer or (");
-        }
-
-        std::shared_ptr<node> term()
-        {
-            std::shared_ptr<node> node = factor();
-            while (currentToken.type == lexer::token_type::mul || currentToken.type == lexer::token_type::div)
-            {
-                lexer::token token = currentToken;
-                currentToken = tokeniser();
-                node = std::make_shared<binaryop_node>(token.name[0], node, factor());
-            }
-            return node;
-        }
-
-        std::shared_ptr<node> expr()
-        {
-            std::shared_ptr<node> node = term();
-            while (currentToken.type == lexer::token_type::add || currentToken.type == lexer::token_type::sub)
-            {
-                lexer::token token = currentToken;
-                currentToken = tokeniser();
-                node = std::make_shared<binaryop_node>(token.name[0], node, term());
-            }
-            return node;
-        }
-    };
-
-    template<typename Stream>
-    pratt(lexer::tokeniser<Stream>) -> pratt<Stream>;
 } // namespace yapl::parser

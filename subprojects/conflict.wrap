@@ -1,3 +1,7 @@
 [wrap-git]
-url = https://github.com/qookei/conflict.git
+url = https://github.com/qookei/conflict
 revision = master
+depth = 1
+
+[provide]
+conflict = conflict_dep

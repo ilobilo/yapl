@@ -2,10 +2,8 @@
 
 #pragma once
 
-#include <optional>
-#include <fstream>
-#include <sstream>
-#include <cstddef>
+#include <string_view>
+#include <string>
 #include <deque>
 
 namespace yapl::lexer
@@ -16,82 +14,57 @@ namespace yapl::lexer
 
         operators_start,
 
-        inc,
-        dec,
+        inc, dec,
 
-        add,
-        sub,
-        mul,
-        div,
-        mod,
+        add, add_assign,
+        sub, sub_assign,
+        mul, mul_assign,
+        div, div_assign,
+        mod, mod_assign,
 
         bw_not,
-        bw_and,
-        bw_or,
-        bw_xor,
+        bw_and, bw_and_assign,
+        bw_or,  bw_or_assign,
+        bw_xor, bw_xor_assign,
 
-        shiftl,
-        shiftr,
+        shiftl, shiftl_assign,
+        shiftr, shiftr_assign,
 
         assign,
 
-        add_assign,
-        sub_assign,
-        mul_assign,
-        div_assign,
-        mod_assign,
-
-        and_assign,
-        or_assign,
-        xor_assign,
-        shiftl_assign,
-        shiftr_assign,
-
         log_not,
-        log_and,
-        log_or,
-        log_xor,
+        log_and, log_and_assign,
+        log_or,  log_or_assign,
+        log_xor, log_xor_assign,
 
-        eq,
-        ne,
-        lt,
-        gt,
-        le,
-        ge,
+        eq, ne, lt,
+        gt, le, ge,
 
         question,
-        colon,
-        semicolon,
+        colon, semicolon,
 
-        comma,
-        dot,
+        comma, dot,
 
-        open_round,
-        close_round,
+        open_round,  close_round,
+        open_curly,  close_curly,
+        open_square, close_square,
 
-        open_curly,
-        close_curly,
-
-        open_square,
-        close_square,
-
-        larrow,
-        rarrow,
+        larrow, rarrow,
 
         operators_end,
 
         func,
         ret,
 
-        ttrue,
-        tfalse,
+        _true,
+        _false,
         null,
 
         number,
         string,
         identifier
     };
-    constexpr inline bool is_operator(token_type type)
+    inline constexpr bool is_operator(token_type type)
     {
         return type > token_type::operators_start && type < token_type::operators_end;
     }
