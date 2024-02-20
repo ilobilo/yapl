@@ -9,6 +9,9 @@
 #include <lexer/lexer.hpp>
 #include <log.hpp>
 
+#include <fstream>
+#include <sstream>
+
 namespace yapl::lexer
 {
     constexpr auto lookup = frozen::make_unordered_map<frozen::string, token_type>
@@ -17,56 +20,45 @@ namespace yapl::lexer
         { "--", token_type::dec },
 
         { "+", token_type::add },
-        { "-", token_type::sub },
-        { "*", token_type::mul },
-        { "/", token_type::div },
-        { "%", token_type::mod },
-
-        { "~", token_type::bw_not },
-        { "bitnot", token_type::bw_not },
-
-        { "&", token_type::bw_and },
-        { "bitand", token_type::bw_and },
-
-        { "|", token_type::bw_or },
-        { "bitor", token_type::bw_or },
-
-        { "^", token_type::bw_xor },
-        { "bitxor", token_type::bw_xor },
-
-        { "<<", token_type::shiftl },
-        { ">>", token_type::shiftr },
-
-        { "=", token_type::assign },
-
         { "+=", token_type::add_assign },
+        { "-", token_type::sub },
         { "-=", token_type::sub_assign },
+        { "*", token_type::mul },
         { "*=", token_type::mul_assign },
+        { "/", token_type::div },
         { "/=", token_type::div_assign },
+        { "%", token_type::mod },
         { "%=", token_type::mod_assign },
 
-        { "&=", token_type::and_assign },
-        { "and_eq", token_type::and_assign },
+        { "~", token_type::bw_not },
 
-        { "|=", token_type::or_assign },
-        { "or_eq", token_type::or_assign },
+        { "&", token_type::bw_and },
+        { "&=", token_type::bw_and_assign },
+        { "|", token_type::bw_or },
+        { "|=", token_type::bw_or_assign },
+        { "^", token_type::bw_xor },
+        { "^=", token_type::bw_xor_assign },
 
-        { "^=", token_type::xor_assign },
-        { "xor_eq", token_type::xor_assign },
-
+        { "<<", token_type::shiftl },
         { "<<=", token_type::shiftl_assign },
+        { ">>", token_type::shiftr },
         { ">>=", token_type::shiftr_assign },
+
+        { "=", token_type::assign },
 
         { "!", token_type::log_not },
         { "not", token_type::log_not },
 
         { "&&", token_type::log_and },
+        { "&&=", token_type::log_and_assign },
         { "and", token_type::log_and },
 
         { "||", token_type::log_or },
+        { "||=", token_type::log_or_assign },
         { "or", token_type::log_or },
 
         { "^^", token_type::log_xor },
+        { "^^=", token_type::log_xor_assign },
         { "xor", token_type::log_xor },
 
         { "==", token_type::eq },
@@ -97,8 +89,8 @@ namespace yapl::lexer
 
         { "fun", token_type::func },
         { "return", token_type::ret },
-        { "true", token_type::ttrue },
-        { "false", token_type::tfalse },
+        { "true", token_type::_true },
+        { "false", token_type::_false },
         { "null", token_type::null }
     });
 
@@ -123,8 +115,7 @@ namespace yapl::lexer
             return char_type::space;
         else if (std::ispunct(c) && c != '_')
             return char_type::punct;
-        else
-            return char_type::other;
+        return char_type::other;
     }
 
     static bool is_num_type(digit_type type, auto c)

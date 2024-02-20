@@ -12,7 +12,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <stdexcept>
 
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
@@ -86,65 +85,6 @@ auto main(int argc, char **argv) -> int
         std::cerr << err << std::endl;
         return EXIT_FAILURE;
     }
-
-    // llvm::Function::Create(llvm::FunctionType::get(builder.getInt32Ty(), { builder.getInt8PtrTy() }, true), llvm::Function::ExternalLinkage, "printf", module.get());
-    // auto int8ptr = builder.getInt8PtrTy();
-    // auto func = llvm::Function::Create(llvm::FunctionType::get(builder.getInt32Ty(), { builder.getInt32Ty(), llvm::PointerType::get(int8ptr, int8ptr->getAddressSpace()) }, false), llvm::Function::ExternalLinkage, "main", module.get());
-
-    // builder.SetInsertPoint(llvm::BasicBlock::Create(context, "entry", func));
-    // {
-    //     auto args_count = func->getArg(0);
-    //     auto args = func->getArg(1);
-
-    //     auto i = builder.CreateAlloca(builder.getInt32Ty());
-    //     builder.CreateStore(builder.getInt32(1), i);
-
-    //     auto rac = builder.CreateAlloca(builder.getInt32Ty());
-    //     builder.CreateStore(builder.CreateSub(args_count, builder.getInt32(1)), rac);
-
-    //     builder.CreateCall(module->getFunction("printf"), { builder.CreateGlobalStringPtr("arguments: %d\n"), builder.CreateLoad(rac->getType(), rac) });
-
-    //     auto loop_start = llvm::BasicBlock::Create(context, "loop_start", func);
-    //     auto loop = llvm::BasicBlock::Create(context, "loop", func);
-    //     auto loop_exit = llvm::BasicBlock::Create(context, "loop_exit", func);
-    //     auto endln = llvm::BasicBlock::Create(context, "endln", func);
-    //     auto endln_exit = llvm::BasicBlock::Create(context, "endln_exit", func);
-
-    //     builder.CreateBr(loop_start);
-
-    //     builder.SetInsertPoint(loop_start);
-    //     builder.CreateCondBr(builder.CreateICmp(llvm::CmpInst::ICMP_SLT, builder.CreateLoad(builder.getInt32Ty(), i), args_count), loop, loop_exit);
-
-    //     builder.SetInsertPoint(loop);
-    //     {
-    //         auto elem = builder.CreateInBoundsGEP(builder.getInt8PtrTy(), args, builder.CreateLoad(builder.getInt32Ty(), i));
-    //         builder.CreateCall(module->getFunction("printf"), { builder.CreateGlobalStringPtr("%s "), builder.CreateLoad(elem->getType(), elem) });
-    //         builder.CreateStore(builder.CreateAdd(builder.CreateLoad(builder.getInt32Ty(), i), builder.getInt32(1)), i);
-    //         builder.CreateBr(loop_start);
-    //     }
-
-    //     builder.SetInsertPoint(loop_exit);
-    //     builder.CreateCondBr(builder.CreateICmp(llvm::CmpInst::ICMP_EQ, builder.CreateLoad(rac->getType(), rac), builder.getInt32(0)), endln_exit, endln);
-
-    //     builder.SetInsertPoint(endln);
-    //     builder.CreateCall(module->getFunction("printf"), { builder.CreateGlobalStringPtr("\n") });
-    //     builder.CreateBr(endln_exit);
-
-    //     builder.SetInsertPoint(endln_exit);
-    // }
-
-    // builder.CreateRet(builder.getInt32(0));
-    // module->print(llvm::outs(), nullptr);
-
-    auto expr = "(5 + (2 - 1) * 2 - 1) / 2";
-    std::stringstream str(expr);
-    yapl::lexer::tokeniser tokeniser("test.cpp", str);
-    yapl::parser::pratt pratt(tokeniser);
-
-    std::string sout;
-    llvm::raw_string_ostream lstream(sout);
-    pratt.parse()->codegen(builder, module)->print(lstream);
-    fmt::print("{} = {}\n", expr, sout);
 
     bool first = true;
     for (const auto &filename : files)

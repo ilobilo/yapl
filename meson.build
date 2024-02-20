@@ -11,17 +11,17 @@ sources = files(
 
 includes = include_directories('src')
 
+cmake = import('cmake')
+
+fmt_opts = cmake.subproject_options()
+fmt_opts.add_cmake_defines({ 'FMT_INSTALL' : false })
+
+frozen_dep = cmake.subproject('frozen').dependency('frozen')
+fmt_dep = cmake.subproject('fmt', options : fmt_opts).dependency('fmt')
+
 magic_enum_dep = dependency('magic_enum')
 conflict_dep = dependency('conflict')
-frozen_dep = dependency('frozen')
 llvm_dep = dependency('llvm')
-fmt_dep = dependency('fmt')
-
-# ret = run_command('llvm-config', '--ldflags', '--system-libs', '--libs', 'all', capture : true, check : true)
-# llvm_libs = ret.stdout().strip().replace('\n', ' ').split()
-
-# ret = run_command('llvm-config', '--includedir', capture : true, check : true)
-# llvm_inc = '-I' + ret.stdout().strip().replace('\n', ' ')
 
 executable('yapl',
     dependencies : [
