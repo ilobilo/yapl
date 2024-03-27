@@ -10,7 +10,7 @@ fun diff(i64: a, i64: b) -> usize
     return ret.as<usize>();
 }
 
-fun main(isize: argc, char[][]: argv) -> int(0) // default return 0
+fun main(string[]: args) -> int(0) // int(0) means default return value 0 of type
 {
     usize[2]: arr = { diff(15, 3), diff(1, 15) };
 

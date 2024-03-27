@@ -1,36 +1,32 @@
+# Copyright (C) 2022-2024  ilobilo
+
 project('YAPL', ['c', 'cpp'],
     version : 'v0.1',
     default_options : ['cpp_std=c++20']
 )
 
 sources = files(
-    'src/main.cpp',
-    'src/lexer/lexer.cpp',
-    'src/parser/parser.cpp'
+    'source/main.cpp',
+    'source/yapl.cpp',
+    'source/lexer.cpp',
+    'source/parser.cpp'
 )
 
-includes = include_directories('src')
+include = include_directories('include')
 
-cmake = import('cmake')
-
-fmt_opts = cmake.subproject_options()
-fmt_opts.add_cmake_defines({ 'FMT_INSTALL' : false })
-
-frozen_dep = cmake.subproject('frozen').dependency('frozen')
-fmt_dep = cmake.subproject('fmt', options : fmt_opts).dependency('fmt')
-
-magic_enum_dep = dependency('magic_enum')
-conflict_dep = dependency('conflict')
-llvm_dep = dependency('llvm')
+message(meson.project_version())
 
 executable('yapl',
     dependencies : [
-        magic_enum_dep,
-        conflict_dep,
-        frozen_dep,
-        llvm_dep,
-        fmt_dep
+        dependency('magic_enum', default_options : [ 'test=false' ]),
+        dependency('conflict'),
+        dependency('llvm'),
+        dependency('fmt'),
+        import('cmake').subproject('frozen').dependency('frozen')
     ],
     sources : sources,
-    include_directories : includes
+    include_directories : include,
+    cpp_args : [
+        '-DYAPL_VERSION="@0@"'.format(meson.project_version())
+    ]
 )
