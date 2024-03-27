@@ -1,4 +1,4 @@
-fun main(isize: argc, char[][]: argv) -> int
+fun main(string[]: args) -> int(0)
 {
     return 0;
 }

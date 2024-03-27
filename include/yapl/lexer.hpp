@@ -1,14 +1,19 @@
-// Copyright (C) 2022  ilobilo
+// Copyright (C) 2022-2024  ilobilo
 
 #pragma once
 
+#include <fstream>
+#include <deque>
+
 #include <string_view>
 #include <string>
-#include <deque>
+
+#include <cstdint>
+#include <cstddef>
 
 namespace yapl::lexer
 {
-    enum class token_type
+    enum class token_type : std::uint8_t
     {
         eof, // space,
 
@@ -64,12 +69,12 @@ namespace yapl::lexer
         string,
         identifier
     };
-    inline constexpr bool is_operator(token_type type)
+    constexpr bool is_operator(token_type type)
     {
         return type > token_type::operators_start && type < token_type::operators_end;
     }
 
-    enum class digit_type
+    enum class digit_type : std::uint8_t
     {
         binary,
         decimal,
@@ -77,7 +82,7 @@ namespace yapl::lexer
         hexadecimal
     };
 
-    enum class char_type
+    enum class char_type : std::uint8_t
     {
         eof,
         space,
@@ -90,19 +95,20 @@ namespace yapl::lexer
         std::string name;
         token_type type;
 
-        size_t line;
-        size_t column;
+        std::size_t line;
+        std::size_t column;
     };
 
-    template<typename Stream>
     struct tokeniser
     {
-        private:
-        Stream _stream;
-        size_t _line;
-        size_t _column;
+        using stream_type = std::ifstream;
 
-        std::string _file;
+        private:
+        stream_type _stream;
+        std::size_t _line;
+        std::size_t _column;
+
+        std::string _filename;
 
         int peekc();
         int getc();
@@ -111,25 +117,38 @@ namespace yapl::lexer
         token next();
 
         public:
-        tokeniser(std::string_view file, Stream &stream) : _stream(std::move(stream)), _line(0), _column(0), _file(file), peek_queue() { }
-        tokeniser(Stream &stream) : _stream(std::move(stream)), _line(0), _column(0), _file("in_memory"), peek_queue() { }
+        tokeniser(std::string_view filename, stream_type &stream) :
+            _stream(std::move(stream)),
+            _line(0), _column(0), _filename(filename) { }
 
         tokeniser(const tokeniser &) = delete;
-        void operator=(const tokeniser &) = delete;
+        tokeniser &operator=(const tokeniser &) = delete;
 
-        token peek(size_t n = 1);
+        tokeniser(tokeniser &&) = default;
+        tokeniser &operator=(tokeniser &&) = default;
+
+        ~tokeniser() = default;
+
+        token peek(std::size_t n = 1);
         token get();
 
-        auto operator()()
+        auto operator()() -> token
         {
             return this->get();
         }
 
-        std::string_view file();
-        size_t line();
-        size_t column();
-    };
+        std::string_view filename() const
+        {
+            return this->_filename;
+        }
 
-    template<typename Stream>
-    tokeniser(std::string_view, Stream &) -> tokeniser<Stream>;
+        std::size_t line() const
+        {
+            return this->_line + 1;
+        }
+        std::size_t column() const
+        {
+            return this->_column - 1;
+        }
+    };
 } // namespace yapl::lexer
