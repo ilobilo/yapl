@@ -10,24 +10,29 @@
 
 namespace yapl
 {
+    namespace registries
+    {
+        using variables = std::unordered_map<std::string_view, std::unique_ptr<ast::nodes::variable>>;
+        using types = std::unordered_map<std::string_view, std::unique_ptr<ast::types::type>>;
+    } // namespace registries
+
     struct module
     {
         std::string target;
         std::string filename;
 
         lexer::tokeniser tokeniser;
-        parser::parse parser;
+        ast::parser parser;
+
+        registries::types type_registry;
+        std::vector<std::unique_ptr<ast::func::function>> func_registry;
 
         llvm::LLVMContext context;
         llvm::IRBuilder<> builder;
         llvm::Module llmod;
 
-        module(std::string_view target, std::string_view filename, lexer::tokeniser::stream_type &stream) :
-            target { target }, filename { filename },
-            tokeniser { filename, stream }, parser { tokeniser },
-            context { }, builder { context }, llmod { filename, context }
-        {
-            this->llmod.setTargetTriple(this->target);
-        }
+        module(std::string_view target, std::string_view filename);
+
+        bool parse();
     };
 } // namespace yapl

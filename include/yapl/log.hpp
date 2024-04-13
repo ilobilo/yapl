@@ -36,7 +36,7 @@ namespace yapl::log
         }
     }
 
-    template<level lvl, typename ...Args>
+    template<level lvl = level::note, typename ...Args>
     void println(fmt::format_string<Args...> msg, Args &&...args) noexcept
     {
         fmt::println(lvl == level::error ? stderr : stdout, "{}",
@@ -51,19 +51,7 @@ namespace yapl::log
 
     namespace parse
     {
-        template<level lvl, typename ...Args>
-        constexpr auto format(std::string_view file, std::size_t line, std::size_t column, fmt::format_string<Args...> msg, Args &&...args) noexcept
-        {
-            return fmt::format(fmt::emphasis::bold, "{}:{}:{}: {} {}",
-                file, line, column, level2str(lvl),
-                fmt::styled(
-                    fmt::format(msg, std::forward<Args>(args)...),
-                    fmt::emphasis::bold
-                )
-            );
-        }
-
-        class error final : public std::exception
+        class error : public std::exception
         {
             private:
             std::string _msg;
@@ -71,7 +59,15 @@ namespace yapl::log
             public:
             template<typename ...Args>
             constexpr error(std::string_view file, std::size_t line, std::size_t column, fmt::format_string<Args...> msg, Args &&...args) noexcept
-                : _msg(format<level::error>(file, line, column, msg, std::forward<Args>(args)...)) { }
+                : _msg(
+                    fmt::format(fmt::emphasis::bold, "{}:{}:{}: {} {}",
+                        file, line, column, level2str(level::error),
+                        fmt::styled(
+                            fmt::format(msg, std::forward<Args>(args)...),
+                            fmt::emphasis::bold
+                        )
+                    )
+                ) { }
 
             constexpr error(const error &) = default;
             constexpr error(error &&) = default;
@@ -87,4 +83,12 @@ namespace yapl::log
             }
         };
     } // namespace parse
+
+    namespace lex
+    {
+        class error : public parse::error
+        {
+            using parse::error::error;
+        };
+    } // namespace lex
 } // namespace yapl::log

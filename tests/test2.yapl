@@ -1,0 +1,17 @@
+// stage 2
+
+fun main(string[]: args) -> int
+{
+    u64[2]: arr = { 0, 2, 3 };
+
+    arr[0]++;
+
+    u64: first = arr[0];
+    u64: second = arr[1];
+
+    println("{} {}", first, second); // -> "1 2"
+    println("{}", arr); // -> "[1, 2, 3]"
+    println("{}", args[0]); // -> "<exec name>"
+
+    return 0;
+}

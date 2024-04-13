@@ -1,0 +1,12 @@
+// stage 1
+
+fun test(u32: a, f64: b) -> i8
+{
+    u32[3]: g;
+    return -18446744073709551615;
+}
+
+fun main(string[]: args) -> i32
+{
+    return 0;
+}

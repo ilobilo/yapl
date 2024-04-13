@@ -7,8 +7,6 @@
 #include <yapl/log.hpp>
 
 #include <filesystem>
-#include <fstream>
-
 #include <optional>
 
 #include <llvm/Support/TargetSelect.h>
@@ -86,18 +84,19 @@ namespace arguments
             return (flags & args::help) ? EXIT_SUCCESS : EXIT_FAILURE;
         }
 
-        namespace log = yapl::log;
         namespace fs = std::filesystem;
+        namespace log = yapl::log;
+        using level = log::level;
 
         if (!fs::exists(arguments::input))
         {
-            log::println<log::level::error>("File '{}' does not exist", arguments::input);
+            log::println<level::error>("File '{}' does not exist", arguments::input);
             return EXIT_FAILURE;
         }
 
         if (fs::exists(arguments::output))
         {
-            log::println<log::level::error>("File '{}' already exists", arguments::output);
+            log::println<level::error>("File '{}' already exists", arguments::output);
             return EXIT_FAILURE;
         }
 
@@ -115,6 +114,7 @@ void llvm_init()
 auto main(int argc, char **argv) -> int
 {
     namespace log = yapl::log;
+    using level = log::level;
 
     if (auto val = arguments::parse(argc, argv); val.has_value())
         return val.value();
@@ -124,29 +124,30 @@ auto main(int argc, char **argv) -> int
     auto target = arguments::target.empty() ? llvm::sys::getDefaultTargetTriple() : std::string(arguments::target);
     if (std::string err; llvm::TargetRegistry::lookupTarget(target, err) == nullptr)
     {
-        log::println<log::level::error>("{}", err);
+        log::println<level::error>("{}", err);
         return EXIT_FAILURE;
     }
 
-    std::ifstream file(arguments::input.data());
-    yapl::module mod { target, arguments::input, file };
+    yapl::module mod { target, arguments::input };
 
-    while (true)
-    {
-        try
-        {
-            auto [str, type, line, column] = mod.tokeniser();
-            if (type == yapl::lexer::token_type::eof)
-                break;
+    mod.parse();
 
-            fmt::println("{:02}:{:02}: '{}' : {}", line, column, str, magic_enum::enum_name(type));
-        }
-        catch (const std::exception &e)
-        {
-            fmt::println(stderr, "{}", e.what());
-            return EXIT_FAILURE;
-        }
-    }
+    // while (true)
+    // {
+    //     try
+    //     {
+    //         auto [str, type, line, column] = mod.tokeniser();
+    //         if (type == yapl::lexer::token_type::eof)
+    //             break;
+
+    //         fmt::println("{:02}:{:02}: '{}' : {}", line, column, str, magic_enum::enum_name(type));
+    //     }
+    //     catch (const std::exception &e)
+    //     {
+    //         fmt::println(stderr, "{}", e.what());
+    //         return EXIT_FAILURE;
+    //     }
+    // }
 
     return EXIT_SUCCESS;
 }

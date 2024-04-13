@@ -1,4 +1,4 @@
-==12345 4567673 54
+==12345 -a 4567673 54
 func
 2534657457 var /*
  * This is a multi line comment
@@ -11,7 +11,7 @@ func
 func_65645624
 // This is a single line comment
 
-= != += ? !
+= != += ? !  -0b01101001
 /* This is also a multi line comment
 test test 123 test test
  */

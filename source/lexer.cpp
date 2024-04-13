@@ -90,6 +90,7 @@ namespace yapl::lexer
             { "->", token_type::rarrow },
 
             { "fun", token_type::func },
+
             { "return", token_type::ret },
             { "true", token_type::_true },
             { "false", token_type::_false },
@@ -162,10 +163,11 @@ namespace yapl::lexer
     {
         while (true)
         {
+            bool extra = false;
             switch (auto chr = this->getc(); get_char_type(chr))
             {
                 case char_type::eof:
-                    return { "", token_type::eof, this->line(), this->column() };
+                    return { "eof", token_type::eof, this->line(), this->column() };
                 case char_type::space:
                     // return { " ", token_type::space, std::nullopt, this->line(), this->column() };
                     break;
@@ -202,7 +204,7 @@ namespace yapl::lexer
                                 }
                                 else escape = true;
                             }
-                            throw log::parse::error(this->filename(), sline, scolumn, "Expected closing '\"'");
+                            throw log::lex::error(this->filename(), sline, scolumn, "Expected closing '\"'");
                         }
                         case '/':
                         {
@@ -228,6 +230,11 @@ namespace yapl::lexer
                                 break;
                             }
                         }
+                        case '-':
+                            if (std::isdigit(this->peekc()))
+                                goto negative_number;
+
+                            [[fallthrough]];
                         default: // operators
                         {
                             std::string name(1, chr);
@@ -248,7 +255,7 @@ namespace yapl::lexer
 
                             const auto *iter = lookup.find(frozen::string(name));
                             if (iter == lookup.end())
-                                throw log::parse::error(this->filename(), sline, scolumn, "Unknown operator '{}'", name);
+                                throw log::lex::error(this->filename(), sline, scolumn, "Unknown operator '{}'", name);
 
                             return { name, iter->second, sline, scolumn };
                         }
@@ -256,7 +263,16 @@ namespace yapl::lexer
                     break;
                 default:
                 {
+                    goto not_negative_number;
+
+                    negative_number:
+                    extra = true;
+
+                    not_negative_number:
                     std::string str(1, chr);
+
+                    if (extra == true)
+                        str += (chr = this->getc());
 
                     auto sline = this->line();
                     auto scolumn = this->column();
@@ -266,13 +282,29 @@ namespace yapl::lexer
 
                     if (digit == true) // numbers
                     {
+                        bool invalid_number = false;
+
+                        auto fits_64bit = [&]
+                        {
+                            errno = 0;
+                            std::strtoull(str.c_str(), nullptr, 0);
+                            if (errno == ERANGE)
+                                return false;
+                            return true;
+                        };
+
                         auto oldc = chr;
                         chr = this->peekc();
 
                         if (get_char_type(chr) != char_type::other)
+                        {
+                            if (fits_64bit() == false)
+                            {
+                                invalid_number = true;
+                                goto num_invalid;
+                            }
                             return { str, token_type::number, sline, scolumn };
-
-                        bool invalid_number = false;
+                        }
 
                         if (oldc == '0')
                         {
@@ -305,8 +337,12 @@ namespace yapl::lexer
                             chr = this->peekc();
                         } while (get_char_type(chr) == char_type::other);
 
+                        if (fits_64bit() == false)
+                            invalid_number = true;
+
+                        num_invalid:
                         if (invalid_number == true)
-                            throw log::parse::error(this->filename(), sline, scolumn, "Invalid {} number '{}'", magic_enum::enum_name(type), str);
+                            throw log::lex::error(this->filename(), sline, scolumn, "Invalid {} number '{}'", magic_enum::enum_name(type), str);
                     }
                     else // identifiers and more operators
                     {
