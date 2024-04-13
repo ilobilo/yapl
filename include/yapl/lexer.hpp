@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cassert>
 
 namespace yapl::lexer
 {
@@ -59,6 +60,9 @@ namespace yapl::lexer
         operators_end,
 
         func,
+
+        expressions_start,
+
         ret,
 
         _true,
@@ -67,11 +71,17 @@ namespace yapl::lexer
 
         number,
         string,
-        identifier
+        identifier,
+
+        expressions_end
     };
     constexpr bool is_operator(token_type type)
     {
         return type > token_type::operators_start && type < token_type::operators_end;
+    }
+    constexpr bool is_expression(token_type type)
+    {
+        return type > token_type::expressions_start && type < token_type::expressions_end;
     }
 
     enum class digit_type : std::uint8_t
@@ -104,11 +114,14 @@ namespace yapl::lexer
         using stream_type = std::ifstream;
 
         private:
-        stream_type _stream;
+        inline static std::size_t ids = 0;
+
+        mutable stream_type _stream;
         std::size_t _line;
         std::size_t _column;
 
         std::string _filename;
+        std::size_t _id;
 
         int peekc();
         int getc();
@@ -117,12 +130,23 @@ namespace yapl::lexer
         token next();
 
         public:
-        tokeniser(std::string_view filename, stream_type &stream) :
-            _stream(std::move(stream)),
-            _line(0), _column(0), _filename(filename) { }
+        tokeniser(std::string filename) :
+            _stream { filename }, _line { 0 }, _column { 0 },
+            _filename { filename }, _id { ids++ } { }
 
-        tokeniser(const tokeniser &) = delete;
-        tokeniser &operator=(const tokeniser &) = delete;
+        tokeniser(const tokeniser &other) :
+            _stream { other._filename }, _line { other._line },
+            _column { other._column }, _filename { other._filename }, _id { other._id }
+        {
+            this->_stream.seekg(other._stream.tellg());
+        };
+
+        tokeniser &operator=(const tokeniser &other)
+        {
+            assert(this->_id == other._id);
+            this->_stream.seekg(other._stream.tellg());
+            return *this;
+        }
 
         tokeniser(tokeniser &&) = default;
         tokeniser &operator=(tokeniser &&) = default;
