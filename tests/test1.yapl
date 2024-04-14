@@ -6,6 +6,13 @@ fun test(u32: a, f64: b) -> i8
     return -18446744073709551615;
 }
 
+fun voidfunc() // default type is void
+{
+    // return is always necessary
+    return;
+}
+
+// string[] means pointer
 fun main(string[]: args) -> i32
 {
     return 0;

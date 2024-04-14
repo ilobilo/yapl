@@ -4,7 +4,7 @@ fun main(string[]: args) -> int
 {
     u64[2]: arr = { 0, 2, 3 };
 
-    arr[0]++;
+    arr[]++; // [] dereferences the pointer
 
     u64: first = arr[0];
     u64: second = arr[1];

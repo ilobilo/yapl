@@ -9,7 +9,6 @@
 #include <string_view>
 #include <string>
 
-#include <utility>
 #include <variant>
 #include <vector>
 #include <memory>
@@ -42,24 +41,22 @@ namespace yapl::ast
             virtual llvm::Type *codegen(llvm::IRBuilder<> &builder) const = 0;
         };
 
-        struct string_type : type
+        struct string : type
         {
             llvm::Type *codegen(llvm::IRBuilder<> &builder) const override
             {
                 // TODO
-                return builder.getInt1Ty();
+                return nullptr;
             }
         };
 
-        struct number_type : type
+        struct number : type
         {
-            private:
             detail::num_size size;
-
-            public:
             bool is_signed;
 
-            number_type(detail::num_size size, bool is_signed) : size { size }, is_signed { is_signed } { }
+            number(detail::num_size size, bool is_signed) :
+                size { size }, is_signed { is_signed } { }
 
             llvm::Type *codegen(llvm::IRBuilder<> &builder) const override
             {
@@ -83,7 +80,7 @@ namespace yapl::ast
             }
         };
 
-        struct bool_type : type
+        struct boolean : type
         {
             llvm::Type *codegen(llvm::IRBuilder<> &builder) const override
             {
@@ -98,32 +95,49 @@ namespace yapl::ast
                 return builder.getVoidTy();
             }
         };
+
+        struct pointer : type
+        {
+            const type *tp;
+
+            explicit pointer(const type *tp) : tp { tp } { }
+
+            llvm::Type *codegen(llvm::IRBuilder<> &builder) const override
+            {
+                return llvm::PointerType::get(this->tp->codegen(builder), 0);
+            }
+        };
+
+        struct array : type
+        {
+            const type *tp;
+            std::size_t size;
+
+            array(const type *tp, std::size_t size) :
+                tp { tp }, size { size } { }
+
+            llvm::Type *codegen(llvm::IRBuilder<> &builder) const override
+            {
+                return llvm::ArrayType::get(this->tp->codegen(builder), this->size);
+            }
+        };
     } // namespace types
 
-    namespace nodes
+    namespace expressions
     {
-        struct node
+        struct expression
         {
-            virtual ~node() = default;
+            virtual ~expression() = default;
             virtual llvm::Value *codegen(llvm::IRBuilder<> &builder) = 0;
         };
 
-        struct variable : node
-        {
-            private:
-            std::string name;
-
-            public:
-            variable(std::string_view name) : name(name) { }
-        };
-
-        struct bool_node : node
+        struct boolean : expression
         {
             private:
             bool value;
 
             public:
-            explicit bool_node(bool value) : value(value) { }
+            explicit boolean(bool value) : value(value) { }
 
             llvm::Value *codegen(llvm::IRBuilder<> &builder) override
             {
@@ -131,14 +145,14 @@ namespace yapl::ast
             }
         };
 
-        struct number_node : node
+        struct number : expression
         {
             private:
             std::variant<std::uint64_t, double> value;
 
             public:
-            explicit number_node(std::uint64_t value) : value { value } { }
-            explicit number_node(double value) : value { value } { }
+            explicit number(std::uint64_t value) : value { value } { }
+            explicit number(double value) : value { value } { }
 
             llvm::Value *codegen(llvm::IRBuilder<> &builder) override
             {
@@ -155,15 +169,29 @@ namespace yapl::ast
             }
         };
 
-        struct binaryop : node
+        struct string : expression
+        {
+            private:
+            std::string value;
+
+            public:
+            explicit string(std::string_view value) : value { value } { }
+
+            llvm::Value *codegen(llvm::IRBuilder<> &builder) override
+            {
+                return llvm::ConstantDataArray::getString(builder.getContext(), this->value);
+            }
+        };
+
+        struct binaryop : expression
         {
             private:
             lexer::token_type op;
-            std::shared_ptr<node> left;
-            std::shared_ptr<node> right;
+            std::shared_ptr<expression> left;
+            std::shared_ptr<expression> right;
 
             public:
-            binaryop(lexer::token_type op, std::shared_ptr<node> left, std::shared_ptr<node> right) :
+            binaryop(lexer::token_type op, std::shared_ptr<expression> left, std::shared_ptr<expression> right) :
                 op { op }, left { left }, right { right } { }
 
             llvm::Value *codegen(llvm::IRBuilder<> &builder) override
@@ -270,34 +298,44 @@ namespace yapl::ast
                 }
             }
         };
-    } // namespace values
+    } // namespace expressions
+
+    namespace statements
+    {
+        struct statement
+        {
+            virtual ~statement() = default;
+            // virtual llvm::Value *codegen(llvm::IRBuilder<> &builder) = 0;
+        };
+
+        struct variable : statement
+        {
+            std::string name;
+            const types::type *type;
+
+            variable(std::string_view name, const types::type *type) :
+                name { name }, type { type } { }
+        };
+    } // namespace statements
 
     namespace func
     {
-        struct parameter
-        {
-            const types::type *type;
-            std::string name;
-        };
-
         struct function
         {
-            private:
             std::string name;
-            std::vector<std::unique_ptr<parameter>> params;
-            const types::type *ret;
+            std::vector<std::unique_ptr<statements::variable>> params;
+            const types::type *ret_type;
 
-            public:
-            function(std::string_view name, std::vector<std::unique_ptr<parameter>> params, const types::type *ret)
-                : name { name }, params { std::move(params) }, ret { ret } { }
+            std::vector<statements::statement *> body;
+            std::unique_ptr<expressions::expression> retval;
 
             llvm::FunctionType *typegen(llvm::IRBuilder<> &builder)
             {
-                std::vector<llvm::Type*> types;
+                std::vector<llvm::Type *> types;
                 for (auto &param : this->params)
                     types.push_back(param->type->codegen(builder));
 
-                auto ret = this->ret->codegen(builder);
+                auto ret = this->ret_type->codegen(builder);
                 return llvm::FunctionType::get(ret, types, false);
             }
         };
@@ -306,10 +344,13 @@ namespace yapl::ast
     struct parser
     {
         private:
-        const types::type *get_type(std::string_view name) const;
+        const types::type *get_type(std::string_view name, std::size_t array_size = 0) const;
 
-        std::pair<std::string, std::string> parse_variable(lexer::tokeniser &parent_toker, lexer::token tok);
-        std::unique_ptr<func::function> parse_function(lexer::tokeniser &parent_toker, lexer::token tok);
+        std::tuple<std::string, std::size_t> parse_type(lexer::tokeniser &parent_toker, lexer::token tok, bool should_throw = true);
+        std::tuple<std::string, std::string, std::size_t> parse_variable(lexer::tokeniser &parent_toker, lexer::token tok, bool should_throw = true);
+
+        std::unique_ptr<expressions::expression> parse_expression(lexer::tokeniser &parent_toker, lexer::token tok, bool should_throw = true);
+        std::unique_ptr<func::function> parse_function(lexer::tokeniser &parent_toker, lexer::token tok, bool should_throw = true);
 
         public:
         lexer::tokeniser &tokeniser;

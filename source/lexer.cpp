@@ -204,7 +204,7 @@ namespace yapl::lexer
                                 }
                                 else escape = true;
                             }
-                            throw log::lex::error(this->filename(), sline, scolumn, "Expected closing '\"'");
+                            throw log::error(this->filename(), sline, scolumn, "Expected closing '\"'");
                         }
                         case '/':
                         {
@@ -255,7 +255,7 @@ namespace yapl::lexer
 
                             const auto *iter = lookup.find(frozen::string(name));
                             if (iter == lookup.end())
-                                throw log::lex::error(this->filename(), sline, scolumn, "Unknown operator '{}'", name);
+                                throw log::error(this->filename(), sline, scolumn, "Unknown operator '{}'", name);
 
                             return { name, iter->second, sline, scolumn };
                         }
@@ -342,7 +342,7 @@ namespace yapl::lexer
 
                         num_invalid:
                         if (invalid_number == true)
-                            throw log::lex::error(this->filename(), sline, scolumn, "Invalid {} number '{}'", magic_enum::enum_name(type), str);
+                            throw log::error(this->filename(), sline, scolumn, "Invalid {} number '{}'", magic_enum::enum_name(type), str);
                     }
                     else // identifiers and more operators
                     {
@@ -366,30 +366,30 @@ namespace yapl::lexer
         auto consume = [&]
         {
             const token tok = this->next();
-            this->peek_queue.push_back(tok);
+            this->_peek_queue.push_back(tok);
             if (tok.type == token_type::eof)
             {
-                n = this->peek_queue.size();
+                n = this->_peek_queue.size();
                 return false;
             }
             return true;
         };
 
-        for (std::size_t i = this->peek_queue.size(); i < n; i++)
+        for (std::size_t i = this->_peek_queue.size(); i < n; i++)
             if (consume() == false)
                 break;
 
-        return this->peek_queue.at(n - 1);
+        return this->_peek_queue.at(n - 1);
     }
 
     token tokeniser::get()
     {
-        if (this->peek_queue.empty() == false)
+        if (this->_peek_queue.empty() == false)
         {
-            auto ret = this->peek_queue.front();
-            this->peek_queue.pop_front();
+            auto ret = this->_peek_queue.front();
+            this->_peek_queue.pop_front();
             return ret;
         }
-        return this->next();
+        return this->next();;
     }
 } // namespace yapl::lexer

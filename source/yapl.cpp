@@ -15,30 +15,30 @@ namespace yapl
         {
             auto add_type = [&](auto name, auto tp)
             {
-                if (this->type_registry.contains(name) == false)
-                    this->type_registry[name] = std::move(tp);
+                if (this->type_registry.normal.contains(name) == false)
+                    this->type_registry.normal[name] = std::move(tp);
             };
 
-            add_type("i8", std::make_unique<ast::types::number_type>(ast::detail::num_size::i8, true));
-            add_type("u8", std::make_unique<ast::types::number_type>(ast::detail::num_size::i8, false));
+            add_type("i8", std::make_unique<ast::types::number>(ast::detail::num_size::i8, true));
+            add_type("u8", std::make_unique<ast::types::number>(ast::detail::num_size::i8, false));
 
-            add_type("i16", std::make_unique<ast::types::number_type>(ast::detail::num_size::i16, true));
-            add_type("u16", std::make_unique<ast::types::number_type>(ast::detail::num_size::i16, false));
+            add_type("i16", std::make_unique<ast::types::number>(ast::detail::num_size::i16, true));
+            add_type("u16", std::make_unique<ast::types::number>(ast::detail::num_size::i16, false));
 
-            add_type("i32", std::make_unique<ast::types::number_type>(ast::detail::num_size::i32, true));
-            add_type("u32", std::make_unique<ast::types::number_type>(ast::detail::num_size::i32, false));
+            add_type("i32", std::make_unique<ast::types::number>(ast::detail::num_size::i32, true));
+            add_type("u32", std::make_unique<ast::types::number>(ast::detail::num_size::i32, false));
 
-            add_type("i64", std::make_unique<ast::types::number_type>(ast::detail::num_size::i64, true));
-            add_type("u64", std::make_unique<ast::types::number_type>(ast::detail::num_size::i64, false));
+            add_type("i64", std::make_unique<ast::types::number>(ast::detail::num_size::i64, true));
+            add_type("u64", std::make_unique<ast::types::number>(ast::detail::num_size::i64, false));
 
-            add_type("f32", std::make_unique<ast::types::number_type>(ast::detail::num_size::f32, true));
-            add_type("f64", std::make_unique<ast::types::number_type>(ast::detail::num_size::f64, true));
+            add_type("f32", std::make_unique<ast::types::number>(ast::detail::num_size::f32, true));
+            add_type("f64", std::make_unique<ast::types::number>(ast::detail::num_size::f64, true));
 
 
-            add_type("bool", std::make_unique<ast::types::bool_type>());
+            add_type("bool", std::make_unique<ast::types::boolean>());
             add_type("void", std::make_unique<ast::types::void_type>());
 
-            add_type("string", std::make_unique<ast::types::string_type>());
+            add_type("string", std::make_unique<ast::types::string>());
         }
     }
 
