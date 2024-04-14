@@ -117,6 +117,8 @@ namespace yapl::lexer
         inline static std::size_t ids = 0;
 
         mutable stream_type _stream;
+        mutable std::deque<token> _peek_queue;
+
         std::size_t _line;
         std::size_t _column;
 
@@ -126,16 +128,15 @@ namespace yapl::lexer
         int peekc();
         int getc();
 
-        std::deque<token> peek_queue;
         token next();
 
         public:
         tokeniser(std::string filename) :
-            _stream { filename }, _line { 0 }, _column { 0 },
+            _stream { filename }, _peek_queue { }, _line { 0 }, _column { 0 },
             _filename { filename }, _id { ids++ } { }
 
         tokeniser(const tokeniser &other) :
-            _stream { other._filename }, _line { other._line },
+            _stream { other._filename }, _peek_queue { other._peek_queue }, _line { other._line },
             _column { other._column }, _filename { other._filename }, _id { other._id }
         {
             this->_stream.seekg(other._stream.tellg());
@@ -144,7 +145,13 @@ namespace yapl::lexer
         tokeniser &operator=(const tokeniser &other)
         {
             assert(this->_id == other._id);
+
             this->_stream.seekg(other._stream.tellg());
+            this->_peek_queue.swap(other._peek_queue);
+
+            this->_column = other._column;
+            this->_line = other._line;
+
             return *this;
         }
 

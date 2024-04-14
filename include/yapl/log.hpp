@@ -49,46 +49,37 @@ namespace yapl::log
         );
     }
 
-    namespace parse
+    class error : public std::exception
     {
-        class error : public std::exception
-        {
-            private:
-            std::string _msg;
+        private:
+        std::string _msg;
 
-            public:
-            template<typename ...Args>
-            constexpr error(std::string_view file, std::size_t line, std::size_t column, fmt::format_string<Args...> msg, Args &&...args) noexcept
-                : _msg(
-                    fmt::format(fmt::emphasis::bold, "{}:{}:{}: {} {}",
-                        file, line, column, level2str(level::error),
-                        fmt::styled(
-                            fmt::format(msg, std::forward<Args>(args)...),
-                            fmt::emphasis::bold
-                        )
+        public:
+        template<typename ...Args>
+        constexpr error(std::string_view file, std::size_t line, std::size_t column, fmt::format_string<Args...> msg, Args &&...args) noexcept
+            : _msg(
+                fmt::format(fmt::emphasis::bold, "{}:{}:{}: {} {}",
+                    file, line, column, level2str(level::error),
+                    fmt::styled(
+                        fmt::format(msg, std::forward<Args>(args)...),
+                        fmt::emphasis::bold
                     )
-                ) { }
+                )
+            ) { }
 
-            constexpr error(const error &) = default;
-            constexpr error(error &&) = default;
+        constexpr error(const error &) = default;
+        constexpr error(error &&) = default;
 
-            error &operator=(const error &) = default;
-            error &operator=(error &&) = default;
+        error &operator=(const error &) = default;
+        error &operator=(error &&) = default;
 
-            ~error() override = default;
+        ~error() override = default;
 
-            [[nodiscard]] const char *what() const noexcept override
-            {
-                return this->_msg.c_str();
-            }
-        };
-    } // namespace parse
-
-    namespace lex
-    {
-        class error : public parse::error
+        [[nodiscard]] const char *what() const noexcept override
         {
-            using parse::error::error;
-        };
-    } // namespace lex
+            return this->_msg.c_str();
+        }
+    };
+
+    struct empty_error { };
 } // namespace yapl::log

@@ -8,12 +8,23 @@
 #include <yapl/lexer.hpp>
 #include <yapl/parser.hpp>
 
+#include <unordered_map>
+#include <map>
+#include <vector>
+#include <memory>
+
 namespace yapl
 {
     namespace registries
     {
-        using variables = std::unordered_map<std::string_view, std::unique_ptr<ast::nodes::variable>>;
-        using types = std::unordered_map<std::string_view, std::unique_ptr<ast::types::type>>;
+        using funcs = std::vector<std::unique_ptr<ast::func::function>>;
+
+        struct types
+        {
+            std::unordered_map<std::string_view, std::unique_ptr<ast::types::type>> normal;
+            std::unordered_map<std::string_view, std::unique_ptr<ast::types::pointer>> pointers;
+            std::map<std::pair<std::string_view, std::size_t>, std::unique_ptr<ast::types::array>> arrays;
+        };
     } // namespace registries
 
     struct module
@@ -25,7 +36,7 @@ namespace yapl
         ast::parser parser;
 
         registries::types type_registry;
-        std::vector<std::unique_ptr<ast::func::function>> func_registry;
+        registries::funcs func_registry;
 
         llvm::LLVMContext context;
         llvm::IRBuilder<> builder;
