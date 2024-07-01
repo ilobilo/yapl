@@ -2,14 +2,13 @@
 
 fun test(u32: a, f64: b) -> i8
 {
-    u32[3]: g;
+    u32[3]: g = 123;
     return -18446744073709551615;
 }
 
 fun voidfunc() // default type is void
 {
-    // return is always necessary
-    return;
+    // return is not necessary
 }
 
 // string[] means pointer

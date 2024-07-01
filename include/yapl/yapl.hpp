@@ -27,7 +27,7 @@ namespace yapl
         };
     } // namespace registries
 
-    struct module
+    struct unit
     {
         std::string target;
         std::string filename;
@@ -42,7 +42,7 @@ namespace yapl
         llvm::IRBuilder<> builder;
         llvm::Module llmod;
 
-        module(std::string_view target, std::string_view filename);
+        unit(std::string_view target, std::string_view filename);
 
         bool parse();
     };
