@@ -59,11 +59,9 @@ namespace yapl::lexer
 
         operators_end,
 
-        func,
+        func, ret,
 
         expressions_start,
-
-        ret,
 
         _true,
         _false,

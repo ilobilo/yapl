@@ -17,7 +17,7 @@
 
 namespace yapl
 {
-    struct module;
+    struct unit;
 } // namespace yapl
 
 namespace yapl::ast
@@ -310,11 +310,19 @@ namespace yapl::ast
 
         struct variable : statement
         {
-            std::string name;
             const types::type *type;
+            std::string name;
 
-            variable(std::string_view name, const types::type *type) :
-                name { name }, type { type } { }
+            variable(const types::type *type, std::string_view name) :
+                type { type }, name { name } { }
+        };
+
+        struct return_statement : statement
+        {
+            std::unique_ptr<expressions::expression> expr;
+
+            return_statement(std::unique_ptr<expressions::expression> expr) :
+                expr { std::move(expr) } { }
         };
     } // namespace statements
 
@@ -327,7 +335,6 @@ namespace yapl::ast
             const types::type *ret_type;
 
             std::vector<statements::statement *> body;
-            std::unique_ptr<expressions::expression> retval;
 
             llvm::FunctionType *typegen(llvm::IRBuilder<> &builder)
             {
@@ -354,9 +361,9 @@ namespace yapl::ast
 
         public:
         lexer::tokeniser &tokeniser;
-        module &parent;
+        unit &parent;
 
-        parser(lexer::tokeniser &tokeniser, module &parent) :
+        parser(lexer::tokeniser &tokeniser, unit &parent) :
             tokeniser { tokeniser }, parent { parent } { }
 
         void parse();

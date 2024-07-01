@@ -14,12 +14,10 @@ sources = files(
 
 include = include_directories('include')
 
-message(meson.project_version())
-
 executable('yapl',
     dependencies : [
         dependency('magic_enum', default_options : [ 'test=false' ]),
-        dependency('conflict'),
+        dependency('argparse'),
         dependency('llvm'),
         dependency('fmt'),
         import('cmake').subproject('frozen').dependency('frozen')

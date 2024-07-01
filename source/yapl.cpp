@@ -5,7 +5,7 @@
 
 namespace yapl
 {
-    module::module(std::string_view target, std::string_view filename) :
+    unit::unit(std::string_view target, std::string_view filename) :
         target { target }, filename { filename },
         tokeniser { std::string(filename) }, parser { tokeniser, *this },
         context { }, builder { context }, llmod { filename, context }
@@ -42,7 +42,7 @@ namespace yapl
         }
     }
 
-    bool module::parse()
+    bool unit::parse()
     {
         try {
             this->parser.parse();

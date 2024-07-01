@@ -1,7 +1,9 @@
 // Copyright (C) 2022-2024  ilobilo
 
-#include <conflict/conflict.hpp>
+#include <argparse/argparse.hpp>
 #include <magic_enum.hpp>
+
+#include <fmt/ostream.h>
 
 #include <yapl/yapl.hpp>
 #include <yapl/log.hpp>
@@ -15,74 +17,43 @@
 
 namespace arguments
 {
-    constexpr std::string_view version_string { YAPL_VERSION };
+    static constexpr std::string_view auto_detect_str = "<auto-detect>";
 
-    std::string_view target;
-    std::string_view input;
-    std::string_view output;
-
-    uint64_t flags = 0;
-
-    enum args : std::uint64_t
-    {
-        help = (1 << 0),
-        version = (1 << 1)
-    };
-
-    const conflict::parser parser
-    {
-        conflict::option {
-            { 'h', "help", "Show help" },
-            flags, args::help
-        },
-        conflict::option {
-            { 'v', "version", "Show version" },
-            flags, args::version
-        },
-        conflict::string_option {
-            { 'i', "input", "Input file. Required" },
-            "file.yapl", input
-        },
-        conflict::string_option {
-            { 'o', "output", "Output file. Required" },
-            "file.o", output
-        },
-        conflict::string_option {
-            { 't', "target", "Target triple: <arch><sub>-<vendor>-<sys>-<abi>. Optional" },
-            "triple", target
-        }
-    };
-
-    void print_version()
-    {
-        fmt::println("YAPL {}", version_string);
-    }
-
-    void print_help()
-    {
-        fmt::println("Parameters:");
-        parser.print_help();
-        print_version();
-    }
+    static std::string target;
+    static std::string input;
+    static std::string output;
 
     std::optional<int> parse(int argc, char **argv)
     {
-        parser.apply_defaults();
-        conflict::default_report(parser.parse(argc - 1, argv + 1));
+        argparse::ArgumentParser parser("YAPL", YAPL_VERSION, argparse::default_arguments::all, true);
 
-        bool help_requested = (flags & args::help);
-        bool stupid_user = (input.empty() || output.empty()) && !help_requested;
+        parser.add_argument("-t", "--target")
+            .default_value(auto_detect_str)
+            .help("target triple: <arch><sub>-<vendor>-<sys>-<abi>");
 
-        if (flags & args::version)
-        {
-            print_version();
-            return EXIT_SUCCESS;
+        parser.add_argument("-i", "--input")
+            .required()
+            .help("specify the input file");
+
+        parser.add_argument("-o", "--output")
+            .default_value("a.out")
+            .help("specify the output file");
+
+        try {
+            parser.parse_args(argc, argv);
         }
-        else if (help_requested || stupid_user)
+        catch (const std::exception &e)
         {
-            print_help();
-            return (flags & args::help) ? EXIT_SUCCESS : EXIT_FAILURE;
+            fmt::println(stderr, "{}", e.what());
+            fmt::println(stderr, "{}", fmt::streamed(parser));
+            return EXIT_FAILURE;
         }
+
+        if (auto fn = parser.present("-i"))
+            arguments::input = *fn;
+
+        arguments::output = parser.get<std::string>("-o");
+        arguments::target = parser.get<std::string_view>("-t");
 
         namespace fs = std::filesystem;
         namespace log = yapl::log;
@@ -121,14 +92,17 @@ auto main(int argc, char **argv) -> int
 
     llvm_init();
 
-    auto target = arguments::target.empty() ? llvm::sys::getDefaultTargetTriple() : std::string(arguments::target);
+    auto target = (arguments::target == arguments::auto_detect_str)
+        ? llvm::sys::getDefaultTargetTriple()
+        : std::string(arguments::target);
+
     if (std::string err; llvm::TargetRegistry::lookupTarget(target, err) == nullptr)
     {
         log::println<level::error>("{}", err);
         return EXIT_FAILURE;
     }
 
-    yapl::module mod { target, arguments::input };
+    yapl::unit mod { target, arguments::input };
 
     mod.parse();
 
